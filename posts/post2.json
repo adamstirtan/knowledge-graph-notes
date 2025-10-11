@@ -1,0 +1,5 @@
+{
+    "timestamp": "2025-01-14T15:30:00Z",
+    "text": "# Building with D3.js\n\nD3.js is an amazing library for creating interactive data visualizations. In this post, I explore how to build force-directed graphs.\n\n```javascript\nconst simulation = d3.forceSimulation(nodes)\n    .force(\"link\", d3.forceLink(links))\n    .force(\"charge\", d3.forceManyBody())\n    .force(\"center\", d3.forceCenter());\n```\n\nThe key is understanding how forces interact to create the layout.",
+    "tags": ["javascript", "d3js", "visualization"]
+}

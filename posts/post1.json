@@ -1,0 +1,5 @@
+{
+    "timestamp": "2025-01-15T10:00:00Z",
+    "text": "# Welcome to My Knowledge Graph\n\nThis is my first post on the knowledge graph. It demonstrates how posts are connected through shared tags.\n\n## Features\n\n- Interactive graph visualization\n- Tag-based connections\n- Markdown support\n\nCheck out my other posts!",
+    "tags": ["introduction", "web", "javascript"]
+}

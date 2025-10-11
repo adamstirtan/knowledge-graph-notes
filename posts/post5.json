@@ -1,0 +1,5 @@
+{
+    "timestamp": "2025-01-11T11:00:00Z",
+    "text": "# JavaScript Tips and Tricks\n\nHere are some useful JavaScript patterns I use frequently:\n\n- Destructuring for cleaner code\n- Arrow functions for concise syntax\n- Async/await for better promise handling\n- Template literals for string formatting\n\nThese features make modern JavaScript development much more enjoyable.",
+    "tags": ["javascript", "development", "tips"]
+}

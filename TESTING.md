@@ -57,26 +57,17 @@ This document describes how to test the knowledge graph website.
 
 ## Automated Validation
 
-Run the validation script to check all features:
+Run the validation script to check all post JSON files:
 
 ```bash
-python3 << 'EOF'
-import json
-
-# Validate JSON files
-for i in range(1, 7):
-    with open(f'posts/post{i}.json') as f:
-        post = json.load(f)
-        assert 'timestamp' in post, f"post{i} missing timestamp"
-        assert 'text' in post, f"post{i} missing text"
-        assert 'tags' in post, f"post{i} missing tags"
-        assert isinstance(post['tags'], list), f"post{i} tags not an array"
-        assert len(post['tags']) > 0, f"post{i} has no tags"
-        print(f"✓ post{i}.json valid")
-
-print("\nAll JSON files validated successfully!")
-EOF
+python3 validate_posts.py
 ```
+
+This script validates:
+- All required fields are present (timestamp, text, tags)
+- Field types are correct (tags must be array)
+- At least one tag is present
+- JSON syntax is valid
 
 ## Browser Compatibility
 
@@ -103,9 +94,21 @@ After deploying to production:
 
 ## Known Limitations
 
-- CDN resources (D3.js, Marked.js) must be accessible
-- Local file:// protocol may have CORS issues for JSON loading
-- Best viewed on desktop browsers (mobile works but smaller nodes)
+### CDN Dependencies
+- **D3.js** (v7) and **Marked.js** are loaded from CDN
+- If CDNs are blocked or unavailable:
+  - The loading screen will show an error message
+  - The graph will not render
+  - **Mitigation**: Download libraries locally and update script tags in index.html
+  - **Alternative**: The page includes fallback sample posts if posts.json fails to load
+
+### Protocol Limitations
+- Local `file://` protocol may have CORS issues for JSON loading
+- **Solution**: Use a local web server (see README for instructions)
+
+### Display Considerations
+- Best viewed on desktop browsers (mobile works but has smaller nodes)
+- Requires modern browser with ES6+ JavaScript support
 
 ## Adding Test Posts
 

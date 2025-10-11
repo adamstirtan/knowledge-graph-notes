@@ -54,7 +54,8 @@ Posts are stored as JSON files in the `posts/` directory. Each post file should 
 After adding a new post:
 1. Create a new JSON file in the `posts/` directory
 2. Add the filename to `posts.json`
-3. Refresh the page
+3. (Optional) Run `python3 validate_posts.py` to validate your post
+4. Refresh the page
 
 ### Navigation
 

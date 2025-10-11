@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adam Stirtan</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      // Fallback check for required libraries
+      window.addEventListener("DOMContentLoaded", () => {
+        if (typeof d3 === "undefined" || typeof marked === "undefined") {
+          const el = document.getElementById("loading");
+          if (el) {
+            el.innerHTML =
+              "Error: Required libraries not loaded.<br><br>" +
+              "This page requires D3.js and Marked.js from CDN.<br>" +
+              "Please check your internet connection or ad blocker settings.";
+          }
+        }
+      });
+    </script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="header">
+      <h1>Adam Stirtan</h1>
+      <nav>
+        <a href="https://github.com/adamstirtan" target="_blank">GitHub</a>
+        <a href="https://linkedin.com/in/adamstirtan" target="_blank"
+          >LinkedIn</a
+        >
+        <a href="mailto:contact@adamstirtan.net">Contact</a>
+      </nav>
+    </div>
+
+    <div id="loading">Loading knowledge graph...</div>
+
+    <svg id="graph-canvas"></svg>
+
+    <div id="overlay">
+      <button id="close-overlay">&times;</button>
+      <div id="post-card">
+        <div class="post-date"></div>
+        <div class="post-content"></div>
+      </div>
+    </div>
+
+    <script>
+      // Configuration
+      const NODE_WIDTH = 120;
+      const NODE_HEIGHT = 60;
+
+      // State
+      let posts = [];
+      let nodes = [];
+      let links = [];
+      let simulation;
+      let svg;
+      let g;
+      let transform = d3.zoomIdentity;
+
+      // Initialize
+      async function init() {
+        try {
+          await loadPosts();
+          createGraph();
+          document.getElementById("loading").style.display = "none";
+        } catch (error) {
+          console.error("Error initializing:", error);
+          document.getElementById("loading").textContent =
+            "Error loading posts. Please check console.";
+        }
+      }
+
+      async function loadPosts() {
+        try {
+          const response = await fetch("posts.json");
+          if (!response.ok) throw new Error("posts.json not found");
+
+          const data = await response.json();
+
+          if (Array.isArray(data)) {
+            if (data.length === 0) {
+              posts = [];
+            } else if (typeof data[0] === "string") {
+              // Legacy format: array of filenames
+              const postPromises = data.map(async (filename) => {
+                const postResponse = await fetch(`${POSTS_DIR}${filename}`);
+                if (!postResponse.ok)
+                  throw new Error(`Failed to load ${filename}`);
+                return postResponse.json();
+              });
+              posts = await Promise.all(postPromises);
+            } else if (typeof data[0] === "object" && data[0] !== null) {
+              posts = data;
+            } else {
+              throw new Error("Unsupported posts.json array format");
+            }
+          } else if (data && Array.isArray(data.posts)) {
+            posts = data.posts;
+          } else {
+            throw new Error("Unsupported posts.json format");
+          }
+
+          // Sort posts by timestamp (newest first)
+          posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        } catch (error) {
+          console.warn("Could not load posts:", error);
+        }
+      }
+
+      // Format a friendly date for node subtitle
+      function getFriendlyDate(ts) {
+        if (!ts) return "";
+        const d = new Date(ts);
+        return d.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
+
+      // Create the graph visualization
+      function createGraph() {
+        // Create nodes from posts
+        nodes = posts.map((post, index) => ({
+          id: index,
+          post: post,
+          // Prefer explicit title, otherwise derive from markdown
+          label:
+            (post.title && String(post.title).trim()) ||
+            getPostTitle(post.text),
+        }));
+
+        // Create links based on shared tags
+        links = [];
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const sharedTags = getSharedTags(
+              nodes[i].post.tags,
+              nodes[j].post.tags
+            );
+            if (sharedTags.length > 0) {
+              links.push({ source: i, target: j, sharedTags });
+            }
+          }
+        }
+
+        // Set up SVG
+        svg = d3.select("#graph-canvas");
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        svg.attr("width", width).attr("height", height);
+
+        // Create a group for zoom/pan
+        g = svg.append("g");
+
+        // Set up zoom behavior
+        const zoom = d3
+          .zoom()
+          .scaleExtent([0.1, 4])
+          .on("zoom", (event) => {
+            transform = event.transform;
+            g.attr("transform", transform);
+          });
+        svg.call(zoom);
+
+        // Create force simulation
+        simulation = d3
+          .forceSimulation(nodes)
+          .force(
+            "link",
+            d3
+              .forceLink(links)
+              .id((d) => d.id)
+              .distance(150)
+          )
+          .force("charge", d3.forceManyBody().strength(-300))
+          .force("center", d3.forceCenter(width / 2, height / 2))
+          .force(
+            "collision",
+            d3
+              .forceCollide()
+              .radius(
+                (d) =>
+                  Math.max(
+                    d.nodeWidth || NODE_WIDTH,
+                    d.nodeHeight || NODE_HEIGHT
+                  ) /
+                    2 +
+                  10
+              )
+          );
+
+        // Create links
+        const link = g
+          .append("g")
+          .selectAll("line")
+          .data(links)
+          .enter()
+          .append("line")
+          .attr("class", "link");
+
+        // Create nodes
+        const node = g
+          .append("g")
+          .selectAll("g")
+          .data(nodes)
+          .enter()
+          .append("g")
+          .call(
+            d3
+              .drag()
+              .on("start", dragStarted)
+              .on("drag", dragged)
+              .on("end", dragEnded)
+          );
+
+        // Add a content group to center title+subtitle together
+        const content = node.append("g").attr("class", "node-content");
+
+        // Add title label
+        content
+          .append("text")
+          .attr("class", "node-label")
+          .attr("x", 0)
+          .text((d) => d.label);
+
+        // Add timestamp subtitle
+        content
+          .append("text")
+          .attr("class", "node-subtitle")
+          .attr("x", 0)
+          .text((d) => getFriendlyDate(d.post.timestamp));
+
+        // Measure label and subtitle to compute dynamic node sizes
+        const H_PAD = 8; // horizontal padding on each side
+        const V_PAD = 6; // vertical padding on each side
+        const LINE_GAP = 2; // gap between title and subtitle
+
+        content.each(function (d) {
+          const group = d3.select(this);
+          const labelEl = group.select("text.node-label").node();
+          const subEl = group.select("text.node-subtitle").node();
+          const lbox = labelEl.getBBox();
+          const sbox = subEl.getBBox();
+          const hasSubtitle = !!subEl.textContent;
+          const contentWidth = Math.max(lbox.width, sbox.width);
+          const contentHeight = hasSubtitle
+            ? lbox.height + LINE_GAP + sbox.height
+            : lbox.height;
+
+          d.nodeWidth = Math.max(NODE_WIDTH, contentWidth + H_PAD * 2);
+          d.nodeHeight = Math.max(NODE_HEIGHT, contentHeight + V_PAD * 2);
+
+          // Vertically center the content by translating the group
+          group.attr("transform", `translate(0, ${-contentHeight / 2})`);
+          // Position texts relative to the content group's top
+          d3.select(labelEl).attr("y", 0);
+          if (hasSubtitle) {
+            d3.select(subEl).attr("y", lbox.height + LINE_GAP);
+          } else {
+            d3.select(subEl).attr("display", "none");
+          }
+        });
+
+        // Insert rectangles behind text using computed sizes
+        node
+          .insert("rect", "g.node-content")
+          .attr("class", "node")
+          .attr("width", (d) => d.nodeWidth)
+          .attr("height", (d) => d.nodeHeight)
+          .attr("x", (d) => -d.nodeWidth / 2)
+          .attr("y", (d) => -d.nodeHeight / 2)
+          .attr("rx", 4)
+          .on("click", (event, d) => showPost(d));
+
+        // Refresh collision force with updated sizes and restart
+        simulation.force(
+          "collision",
+          d3
+            .forceCollide()
+            .radius((d) => Math.max(d.nodeWidth, d.nodeHeight) / 2 + 10)
+        );
+        simulation.alpha(0.6).restart();
+
+        // Update positions on simulation tick
+        simulation.on("tick", () => {
+          link
+            .attr("x1", (d) => d.source.x)
+            .attr("y1", (d) => d.source.y)
+            .attr("x2", (d) => d.target.x)
+            .attr("y2", (d) => d.target.y);
+
+          node.attr("transform", (d) => `translate(${d.x},${d.y})`);
+        });
+
+        // Focus on most recent post after simulation stabilizes
+        setTimeout(() => {
+          if (nodes.length > 0) {
+            focusOnNode(nodes[0]);
+          }
+        }, 1000);
+
+        // Handle window resize
+        window.addEventListener("resize", () => {
+          const newWidth = window.innerWidth;
+          const newHeight = window.innerHeight;
+          svg.attr("width", newWidth).attr("height", newHeight);
+          simulation.force(
+            "center",
+            d3.forceCenter(newWidth / 2, newHeight / 2)
+          );
+          simulation.alpha(0.3).restart();
+        });
+      }
+
+      // Get shared tags between two tag arrays
+      function getSharedTags(tags1, tags2) {
+        return tags1.filter((tag) => tags2.includes(tag));
+      }
+
+      // Focus camera on a specific node
+      function focusOnNode(node) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const scale = 1.5;
+        const x = -node.x * scale + width / 2;
+        const y = -node.y * scale + height / 2;
+
+        svg
+          .transition()
+          .duration(750)
+          .call(
+            d3.zoom().transform,
+            d3.zoomIdentity.translate(x, y).scale(scale)
+          );
+      }
+
+      // Show post overlay
+      function showPost(nodeData) {
+        const overlay = document.getElementById("overlay");
+        const postCard = document.getElementById("post-card");
+        const post = nodeData.post;
+
+        // Set post date
+        const date = new Date(post.timestamp);
+        postCard.querySelector(".post-date").textContent =
+          date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+        // Set post content
+        const contentDiv = postCard.querySelector(".post-content");
+        contentDiv.innerHTML = "";
+
+        // Add image if present
+        if (post.image) {
+          const img = document.createElement("img");
+          img.src = post.image;
+          img.alt = "Post image";
+          contentDiv.appendChild(img);
+        }
+
+        // Render markdown
+        const markdownContent = document.createElement("div");
+        markdownContent.innerHTML = marked.parse(post.text);
+
+        // Make all links open in new tab
+        markdownContent.querySelectorAll("a").forEach((link) => {
+          link.setAttribute("target", "_blank");
+          link.setAttribute("rel", "noopener noreferrer");
+        });
+
+        contentDiv.appendChild(markdownContent);
+
+        // Show overlay
+        overlay.style.display = "flex";
+      }
+
+      // Hide post overlay
+      function hideOverlay() {
+        document.getElementById("overlay").style.display = "none";
+      }
+
+      // Drag handlers
+      function dragStarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+
+      function dragEnded(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+
+      // Event listeners
+      document
+        .getElementById("close-overlay")
+        .addEventListener("click", hideOverlay);
+      document.getElementById("overlay").addEventListener("click", (e) => {
+        if (e.target.id === "overlay") hideOverlay();
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") hideOverlay();
+      });
+
+      // Start the application
+      init();
+    </script>
+  </body>
+</html>

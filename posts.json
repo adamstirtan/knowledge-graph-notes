@@ -1,0 +1,39 @@
+[
+  {
+    "timestamp": "2025-08-03T16:45:00Z",
+    "title": "Fell off the Segway",
+    "text": "This afternoon I had a little mishap and fell off my Segway. Thankfully, I'm okay! Just a few scrapes and bruises. It was a reminder to always wear protective gear and stay cautious while riding.",
+    "image": "images/DD2FD4EF-516C-4578-92A0-B3B08D71F788_1_105_c.jpeg",
+    "tags": ["funny", "accident"]
+  },
+  {
+    "timestamp": "2025-10-11T10:00:00Z",
+    "title": "Recommendation Algorithms Workshop",
+    "text": "I've been working on the recommendation algorithm workshop for RhythmHacks 2025. Check out more here: https://github.com/adamstirtan/rhythmhacks2025",
+    "tags": ["hackathon", "development", "web", "algorithms", "javascript"]
+  },
+  {
+    "timestamp": "2025-01-14T15:30:00Z",
+    "title": "Building with D3.js",
+    "text": "# Building with D3.js\n\nD3.js is an amazing library for creating interactive data visualizations. In this post, I explore how to build force-directed graphs.\n\n```javascript\nconst simulation = d3.forceSimulation(nodes)\n    .force(\"link\", d3.forceLink(links))\n    .force(\"charge\", d3.forceManyBody())\n    .force(\"center\", d3.forceCenter());\n```\n\nThe key is understanding how forces interact to create the layout.",
+    "tags": ["javascript", "d3js", "visualization"]
+  },
+  {
+    "timestamp": "2025-01-13T09:15:00Z",
+    "title": "Web Dev Best Practices",
+    "text": "# Web Development Best Practices\n\nSome key principles I follow:\n\n1. **Performance First** - Optimize for speed\n2. **Accessibility** - Make it usable for everyone\n3. **Responsive Design** - Works on all devices\n4. **Clean Code** - Maintainable and readable\n\nThese principles guide all my web projects.",
+    "tags": ["web", "development", "best-practices"]
+  },
+  {
+    "timestamp": "2025-01-12T14:20:00Z",
+    "title": "Power of Visualization",
+    "text": "# The Power of Visualization\n\nData visualization transforms complex information into understandable insights. Whether it's a simple chart or an interactive graph, visualization helps us see patterns and relationships.\n\n> \"The purpose of visualization is insight, not pictures.\" - Ben Shneiderman\n\nThis quote perfectly captures what I aim for in my visualization work.",
+    "tags": ["visualization", "data", "design"]
+  },
+  {
+    "timestamp": "2025-01-11T11:00:00Z",
+    "title": "JS Tips & Tricks",
+    "text": "# JavaScript Tips and Tricks\n\nHere are some useful JavaScript patterns I use frequently:\n\n- Destructuring for cleaner code\n- Arrow functions for concise syntax\n- Async/await for better promise handling\n- Template literals for string formatting\n\nThese features make modern JavaScript development much more enjoyable.",
+    "tags": ["javascript", "development", "tips"]
+  }
+]

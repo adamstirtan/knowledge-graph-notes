@@ -32,30 +32,26 @@ Then open `http://localhost:8000` in your browser.
 
 ### Adding Posts
 
-Posts are stored as JSON files in the `posts/` directory. Each post file should have:
+Posts are stored in the file `posts.json` as follows:
 
 ```json
 {
-    "timestamp": "2025-01-15T10:00:00Z",
-    "text": "# Post Title\n\nPost content in Markdown format...",
-    "image": "path/to/image.jpg",
-    "tags": ["tag1", "tag2", "tag3"]
+  "timestamp": "2025-01-15T10:00:00Z",
+  "text": "# Post Title\n\nPost content in Markdown format...",
+  "image": "path/to/image.jpg",
+  "tags": ["tag1", "tag2", "tag3"]
 }
 ```
 
 **Required fields:**
+
 - `timestamp`: ISO 8601 date/time string
 - `text`: Markdown-formatted content
 - `tags`: Array of tag strings (nodes with shared tags will be connected)
 
 **Optional fields:**
-- `image`: Path to a local image file (displayed above the post content)
 
-After adding a new post:
-1. Create a new JSON file in the `posts/` directory
-2. Add the filename to `posts.json`
-3. (Optional) Run `python3 validate_posts.py` to validate your post
-4. Refresh the page
+- `image`: Path to a local image file (displayed above the post content)
 
 ### Navigation
 
@@ -64,32 +60,9 @@ After adding a new post:
 - **View Post**: Click on any node to open the post overlay
 - **Close Post**: Click the X button, click outside the card, or press ESC
 
-## Deployment
-
-### GitHub Pages
-
-1. Push the repository to GitHub
-2. Go to Settings > Pages
-3. Set source to main branch
-4. Your site will be available at `https://username.github.io/repository-name/`
-
-### Other Hosting
-
-Since this is a static website, you can host it on:
-- Netlify
-- Vercel
-- Any static hosting service
-- Any web server
-
-Simply upload all files and ensure `index.html` is in the root directory.
-
 ## Technology
 
 - **D3.js**: Force-directed graph layout and visualization
 - **Marked.js**: Markdown rendering
 - **Vanilla JavaScript**: No framework dependencies
 - **CSS3**: Modern styling with animations
-
-## License
-
-MIT License

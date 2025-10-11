@@ -1,6 +1,0 @@
-{
-    "timestamp": "2025-01-16T16:45:00Z",
-    "text": "# Force-Directed Graph Theory\n\nForce-directed graphs are a class of algorithms that position nodes in a visually pleasing way. The basic idea is to treat nodes as physical objects that repel each other, while edges act like springs pulling connected nodes together.\n\n## Key Forces\n\n1. **Charge Force**: Nodes repel each other like electric charges\n2. **Link Force**: Connected nodes attract each other like springs\n3. **Center Force**: Pulls all nodes toward the center\n4. **Collision Force**: Prevents nodes from overlapping\n\nThese forces work together to create an organic, natural-looking layout that reveals the structure of the network.",
-    "image": "images/example-graph.png",
-    "tags": ["visualization", "graph-theory", "d3js"]
-}

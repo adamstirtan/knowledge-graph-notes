@@ -1,267 +1,37 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Adam Stirtan - Knowledge Graph</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Adam Stirtan</title>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        // Fallback check for required libraries
-        window.addEventListener('DOMContentLoaded', () => {
-            if (typeof d3 === 'undefined' || typeof marked === 'undefined') {
-                document.getElementById('loading').innerHTML = 
-                    'Error: Required libraries not loaded.<br><br>' +
-                    'This page requires D3.js and Marked.js from CDN.<br>' +
-                    'Please check your internet connection or ad blocker settings.';
-            }
-        });
+      // Fallback check for required libraries
+      window.addEventListener("DOMContentLoaded", () => {
+        if (typeof d3 === "undefined" || typeof marked === "undefined") {
+          const el = document.getElementById("loading");
+          if (el) {
+            el.innerHTML =
+              "Error: Required libraries not loaded.<br><br>" +
+              "This page requires D3.js and Marked.js from CDN.<br>" +
+              "Please check your internet connection or ad blocker settings.";
+          }
+        }
+      });
     </script>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1a1a1a;
-            color: #e0e0e0;
-            overflow: hidden;
-            width: 100vw;
-            height: 100vh;
-        }
-
-        #header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: 1000;
-            background-color: rgba(26, 26, 26, 0.95);
-            padding: 15px 25px;
-            border-bottom: 1px solid #333;
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-
-        #header h1 {
-            font-size: 20px;
-            font-weight: 600;
-            color: #e0e0e0;
-            margin: 0;
-        }
-
-        #header nav {
-            display: flex;
-            gap: 15px;
-        }
-
-        #header a {
-            color: #4a9eff;
-            text-decoration: none;
-            font-size: 14px;
-            transition: color 0.2s;
-        }
-
-        #header a:hover {
-            color: #6bb3ff;
-        }
-
-        #graph-canvas {
-            width: 100vw;
-            height: 100vh;
-            cursor: grab;
-        }
-
-        #graph-canvas:active {
-            cursor: grabbing;
-        }
-
-        .node {
-            fill: #2a2a2a;
-            stroke: #4a9eff;
-            stroke-width: 2;
-            cursor: pointer;
-            transition: fill 0.2s;
-        }
-
-        .node:hover {
-            fill: #3a3a3a;
-        }
-
-        .node-label {
-            fill: #e0e0e0;
-            font-size: 12px;
-            pointer-events: none;
-            text-anchor: middle;
-            dominant-baseline: middle;
-        }
-
-        .link {
-            stroke: #444;
-            stroke-opacity: 0.6;
-            stroke-width: 1.5;
-        }
-
-        #overlay {
-            position: fixed;
-            display: none;
-            background-color: rgba(0, 0, 0, 0.7);
-            width: 100vw;
-            height: 100vh;
-            top: 0;
-            left: 0;
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            animation: fadeIn 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        #post-card {
-            background-color: #2a2a2a;
-            border: 1px solid #4a9eff;
-            border-radius: 8px;
-            padding: 30px;
-            max-width: 700px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-            animation: slideIn 0.3s;
-        }
-
-        @keyframes slideIn {
-            from { 
-                transform: translateY(-20px);
-                opacity: 0;
-            }
-            to { 
-                transform: translateY(0);
-                opacity: 1;
-            }
-        }
-
-        #post-card img {
-            max-width: 100%;
-            height: auto;
-            border-radius: 4px;
-            margin-bottom: 20px;
-        }
-
-        #post-card .post-date {
-            color: #888;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        #post-card .post-content {
-            line-height: 1.6;
-        }
-
-        #post-card .post-content h1,
-        #post-card .post-content h2,
-        #post-card .post-content h3 {
-            margin-top: 20px;
-            margin-bottom: 10px;
-            color: #e0e0e0;
-        }
-
-        #post-card .post-content p {
-            margin-bottom: 15px;
-        }
-
-        #post-card .post-content a {
-            color: #4a9eff;
-            text-decoration: none;
-        }
-
-        #post-card .post-content a:hover {
-            text-decoration: underline;
-        }
-
-        #post-card .post-content code {
-            background-color: #1a1a1a;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: 'Courier New', monospace;
-        }
-
-        #post-card .post-content pre {
-            background-color: #1a1a1a;
-            padding: 15px;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin-bottom: 15px;
-        }
-
-        #post-card .post-content pre code {
-            background-color: transparent;
-            padding: 0;
-        }
-
-        #close-overlay {
-            position: absolute;
-            top: 20px;
-            right: 30px;
-            font-size: 30px;
-            color: #e0e0e0;
-            cursor: pointer;
-            background: none;
-            border: none;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            line-height: 30px;
-            text-align: center;
-        }
-
-        #close-overlay:hover {
-            color: #4a9eff;
-        }
-
-        #loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: #4a9eff;
-            font-size: 18px;
-            z-index: 100;
-        }
-
-        /* Scrollbar styling for webkit browsers */
-        #post-card::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        #post-card::-webkit-scrollbar-track {
-            background: #1a1a1a;
-        }
-
-        #post-card::-webkit-scrollbar-thumb {
-            background: #4a9eff;
-            border-radius: 4px;
-        }
-
-        #post-card::-webkit-scrollbar-thumb:hover {
-            background: #6bb3ff;
-        }
-    </style>
-</head>
-<body>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
     <div id="header">
-        <h1>Adam Stirtan</h1>
-        <nav>
-            <a href="https://github.com/adamstirtan" target="_blank">GitHub</a>
-            <a href="https://linkedin.com/in/adamstirtan" target="_blank">LinkedIn</a>
-            <a href="mailto:contact@adamstirtan.net">Contact</a>
-        </nav>
+      <h1>Adam Stirtan</h1>
+      <nav>
+        <a href="https://github.com/adamstirtan" target="_blank">GitHub</a>
+        <a href="https://linkedin.com/in/adamstirtan" target="_blank"
+          >LinkedIn</a
+        >
+        <a href="mailto:contact@adamstirtan.net">Contact</a>
+      </nav>
     </div>
 
     <div id="loading">Loading knowledge graph...</div>
@@ -269,383 +39,389 @@
     <svg id="graph-canvas"></svg>
 
     <div id="overlay">
-        <button id="close-overlay">&times;</button>
-        <div id="post-card">
-            <div class="post-date"></div>
-            <div class="post-content"></div>
-        </div>
+      <button id="close-overlay">&times;</button>
+      <div id="post-card">
+        <div class="post-date"></div>
+        <div class="post-content"></div>
+      </div>
     </div>
 
     <script>
-        // Configuration
-        const POSTS_DIR = 'posts/';
-        const NODE_WIDTH = 120;
-        const NODE_HEIGHT = 60;
+      // Configuration
+      const NODE_WIDTH = 120;
+      const NODE_HEIGHT = 60;
 
-        // State
-        let posts = [];
-        let nodes = [];
-        let links = [];
-        let simulation;
-        let svg;
-        let g;
-        let transform = d3.zoomIdentity;
+      // State
+      let posts = [];
+      let nodes = [];
+      let links = [];
+      let simulation;
+      let svg;
+      let g;
+      let transform = d3.zoomIdentity;
 
-        // Initialize
-        async function init() {
-            try {
-                await loadPosts();
-                createGraph();
-                document.getElementById('loading').style.display = 'none';
-            } catch (error) {
-                console.error('Error initializing:', error);
-                document.getElementById('loading').textContent = 'Error loading posts. Please check console.';
+      // Initialize
+      async function init() {
+        try {
+          await loadPosts();
+          createGraph();
+          document.getElementById("loading").style.display = "none";
+        } catch (error) {
+          console.error("Error initializing:", error);
+          document.getElementById("loading").textContent =
+            "Error loading posts. Please check console.";
+        }
+      }
+
+      async function loadPosts() {
+        try {
+          const response = await fetch("posts.json");
+          if (!response.ok) throw new Error("posts.json not found");
+
+          const data = await response.json();
+
+          if (Array.isArray(data)) {
+            if (data.length === 0) {
+              posts = [];
+            } else if (typeof data[0] === "string") {
+              // Legacy format: array of filenames
+              const postPromises = data.map(async (filename) => {
+                const postResponse = await fetch(`${POSTS_DIR}${filename}`);
+                if (!postResponse.ok)
+                  throw new Error(`Failed to load ${filename}`);
+                return postResponse.json();
+              });
+              posts = await Promise.all(postPromises);
+            } else if (typeof data[0] === "object" && data[0] !== null) {
+              posts = data;
+            } else {
+              throw new Error("Unsupported posts.json array format");
             }
+          } else if (data && Array.isArray(data.posts)) {
+            posts = data.posts;
+          } else {
+            throw new Error("Unsupported posts.json format");
+          }
+
+          // Sort posts by timestamp (newest first)
+          posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+        } catch (error) {
+          console.warn("Could not load posts:", error);
         }
+      }
 
-        // Load all posts from the posts directory
-        async function loadPosts() {
-            try {
-                // Try to load posts.json which contains the list of post files
-                const response = await fetch('posts.json');
-                if (!response.ok) {
-                    throw new Error('posts.json not found');
-                }
-                const postFiles = await response.json();
-                
-                // Load each post file
-                const postPromises = postFiles.map(async (filename) => {
-                    const postResponse = await fetch(`${POSTS_DIR}${filename}`);
-                    if (!postResponse.ok) {
-                        throw new Error(`Failed to load ${filename}`);
-                    }
-                    return postResponse.json();
-                });
+      // Format a friendly date for node subtitle
+      function getFriendlyDate(ts) {
+        if (!ts) return "";
+        const d = new Date(ts);
+        return d.toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+        });
+      }
 
-                posts = await Promise.all(postPromises);
-                
-                // Sort posts by timestamp (newest first)
-                posts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            } catch (error) {
-                console.warn('Could not load posts:', error);
-                // Use sample posts if no real posts are available
-                posts = getSamplePosts();
+      // Create the graph visualization
+      function createGraph() {
+        // Create nodes from posts
+        nodes = posts.map((post, index) => ({
+          id: index,
+          post: post,
+          // Prefer explicit title, otherwise derive from markdown
+          label:
+            (post.title && String(post.title).trim()) ||
+            getPostTitle(post.text),
+        }));
+
+        // Create links based on shared tags
+        links = [];
+        for (let i = 0; i < nodes.length; i++) {
+          for (let j = i + 1; j < nodes.length; j++) {
+            const sharedTags = getSharedTags(
+              nodes[i].post.tags,
+              nodes[j].post.tags
+            );
+            if (sharedTags.length > 0) {
+              links.push({ source: i, target: j, sharedTags });
             }
+          }
         }
 
-        // Sample posts for demonstration
-        function getSamplePosts() {
-            return [
-                {
-                    timestamp: '2025-01-15T10:00:00Z',
-                    text: '# Welcome to My Knowledge Graph\n\nThis is my first post on the knowledge graph. It demonstrates how posts are connected through shared tags.\n\n## Features\n\n- Interactive graph visualization\n- Tag-based connections\n- Markdown support\n\nCheck out my other posts!',
-                    tags: ['introduction', 'web', 'javascript']
-                },
-                {
-                    timestamp: '2025-01-14T15:30:00Z',
-                    text: '# Building with D3.js\n\nD3.js is an amazing library for creating interactive data visualizations. In this post, I explore how to build force-directed graphs.\n\n```javascript\nconst simulation = d3.forceSimulation(nodes)\n    .force("link", d3.forceLink(links))\n    .force("charge", d3.forceManyBody())\n    .force("center", d3.forceCenter());\n```',
-                    tags: ['javascript', 'd3js', 'visualization']
-                },
-                {
-                    timestamp: '2025-01-13T09:15:00Z',
-                    text: '# Web Development Best Practices\n\nSome key principles I follow:\n\n1. **Performance First** - Optimize for speed\n2. **Accessibility** - Make it usable for everyone\n3. **Responsive Design** - Works on all devices\n4. **Clean Code** - Maintainable and readable\n\nThese principles guide all my web projects.',
-                    tags: ['web', 'development', 'best-practices']
-                },
-                {
-                    timestamp: '2025-01-12T14:20:00Z',
-                    text: '# The Power of Visualization\n\nData visualization transforms complex information into understandable insights. Whether it\'s a simple chart or an interactive graph, visualization helps us see patterns and relationships.\n\n> "The purpose of visualization is insight, not pictures." - Ben Shneiderman',
-                    tags: ['visualization', 'data', 'design']
-                },
-                {
-                    timestamp: '2025-01-11T11:00:00Z',
-                    text: '# JavaScript Tips and Tricks\n\nHere are some useful JavaScript patterns I use frequently:\n\n- Destructuring for cleaner code\n- Arrow functions for concise syntax\n- Async/await for better promise handling\n- Template literals for string formatting\n\nThese features make modern JavaScript development much more enjoyable.',
-                    tags: ['javascript', 'development', 'tips']
-                }
-            ];
-        }
+        // Set up SVG
+        svg = d3.select("#graph-canvas");
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        svg.attr("width", width).attr("height", height);
 
-        // Create the graph visualization
-        function createGraph() {
-            // Create nodes from posts
-            nodes = posts.map((post, index) => ({
-                id: index,
-                post: post,
-                label: getPostTitle(post.text)
-            }));
+        // Create a group for zoom/pan
+        g = svg.append("g");
 
-            // Create links based on shared tags
-            links = [];
-            for (let i = 0; i < nodes.length; i++) {
-                for (let j = i + 1; j < nodes.length; j++) {
-                    const sharedTags = getSharedTags(
-                        nodes[i].post.tags,
-                        nodes[j].post.tags
-                    );
-                    if (sharedTags.length > 0) {
-                        links.push({
-                            source: i,
-                            target: j,
-                            sharedTags: sharedTags
-                        });
-                    }
-                }
-            }
+        // Set up zoom behavior
+        const zoom = d3
+          .zoom()
+          .scaleExtent([0.1, 4])
+          .on("zoom", (event) => {
+            transform = event.transform;
+            g.attr("transform", transform);
+          });
+        svg.call(zoom);
 
-            // Set up SVG
-            svg = d3.select('#graph-canvas');
-            const width = window.innerWidth;
-            const height = window.innerHeight;
+        // Create force simulation
+        simulation = d3
+          .forceSimulation(nodes)
+          .force(
+            "link",
+            d3
+              .forceLink(links)
+              .id((d) => d.id)
+              .distance(150)
+          )
+          .force("charge", d3.forceManyBody().strength(-300))
+          .force("center", d3.forceCenter(width / 2, height / 2))
+          .force(
+            "collision",
+            d3
+              .forceCollide()
+              .radius(
+                (d) =>
+                  Math.max(
+                    d.nodeWidth || NODE_WIDTH,
+                    d.nodeHeight || NODE_HEIGHT
+                  ) /
+                    2 +
+                  10
+              )
+          );
 
-            svg.attr('width', width).attr('height', height);
+        // Create links
+        const link = g
+          .append("g")
+          .selectAll("line")
+          .data(links)
+          .enter()
+          .append("line")
+          .attr("class", "link");
 
-            // Create a group for zoom/pan
-            g = svg.append('g');
+        // Create nodes
+        const node = g
+          .append("g")
+          .selectAll("g")
+          .data(nodes)
+          .enter()
+          .append("g")
+          .call(
+            d3
+              .drag()
+              .on("start", dragStarted)
+              .on("drag", dragged)
+              .on("end", dragEnded)
+          );
 
-            // Set up zoom behavior
-            const zoom = d3.zoom()
-                .scaleExtent([0.1, 4])
-                .on('zoom', (event) => {
-                    transform = event.transform;
-                    g.attr('transform', transform);
-                });
+        // Add a content group to center title+subtitle together
+        const content = node.append("g").attr("class", "node-content");
 
-            svg.call(zoom);
+        // Add title label
+        content
+          .append("text")
+          .attr("class", "node-label")
+          .attr("x", 0)
+          .text((d) => d.label);
 
-            // Create force simulation
-            simulation = d3.forceSimulation(nodes)
-                .force('link', d3.forceLink(links)
-                    .id(d => d.id)
-                    .distance(150))
-                .force('charge', d3.forceManyBody()
-                    .strength(-300))
-                .force('center', d3.forceCenter(width / 2, height / 2))
-                .force('collision', d3.forceCollide()
-                    .radius(NODE_WIDTH / 2 + 10));
+        // Add timestamp subtitle
+        content
+          .append("text")
+          .attr("class", "node-subtitle")
+          .attr("x", 0)
+          .text((d) => getFriendlyDate(d.post.timestamp));
 
-            // Create links
-            const link = g.append('g')
-                .selectAll('line')
-                .data(links)
-                .enter()
-                .append('line')
-                .attr('class', 'link');
+        // Measure label and subtitle to compute dynamic node sizes
+        const H_PAD = 8; // horizontal padding on each side
+        const V_PAD = 6; // vertical padding on each side
+        const LINE_GAP = 2; // gap between title and subtitle
 
-            // Create nodes
-            const node = g.append('g')
-                .selectAll('g')
-                .data(nodes)
-                .enter()
-                .append('g')
-                .call(d3.drag()
-                    .on('start', dragStarted)
-                    .on('drag', dragged)
-                    .on('end', dragEnded));
+        content.each(function (d) {
+          const group = d3.select(this);
+          const labelEl = group.select("text.node-label").node();
+          const subEl = group.select("text.node-subtitle").node();
+          const lbox = labelEl.getBBox();
+          const sbox = subEl.getBBox();
+          const hasSubtitle = !!subEl.textContent;
+          const contentWidth = Math.max(lbox.width, sbox.width);
+          const contentHeight = hasSubtitle
+            ? lbox.height + LINE_GAP + sbox.height
+            : lbox.height;
 
-            // Add rectangles for nodes
-            node.append('rect')
-                .attr('class', 'node')
-                .attr('width', NODE_WIDTH)
-                .attr('height', NODE_HEIGHT)
-                .attr('x', -NODE_WIDTH / 2)
-                .attr('y', -NODE_HEIGHT / 2)
-                .attr('rx', 4)
-                .on('click', (event, d) => showPost(d));
+          d.nodeWidth = Math.max(NODE_WIDTH, contentWidth + H_PAD * 2);
+          d.nodeHeight = Math.max(NODE_HEIGHT, contentHeight + V_PAD * 2);
 
-            // Add labels to nodes
-            node.append('text')
-                .attr('class', 'node-label')
-                .text(d => d.label)
-                .each(function(d) {
-                    // Wrap text if it's too long
-                    const text = d3.select(this);
-                    const words = d.label.split(/\s+/);
-                    const lineHeight = 14;
-                    const maxWidth = NODE_WIDTH - 10;
-
-                    let line = [];
-                    let lineNumber = 0;
-                    let y = 0;
-
-                    text.text(null);
-
-                    words.forEach(word => {
-                        line.push(word);
-                        const testLine = line.join(' ');
-                        
-                        // Create temporary text to measure width
-                        const tempText = text.append('tspan')
-                            .text(testLine);
-                        
-                        if (tempText.node().getComputedTextLength() > maxWidth && line.length > 1) {
-                            line.pop();
-                            tempText.text(line.join(' '))
-                                .attr('x', 0)
-                                .attr('y', y)
-                                .attr('dy', lineNumber * lineHeight - 7);
-                            line = [word];
-                            lineNumber++;
-                            y = 0;
-                            
-                            text.append('tspan')
-                                .text(word)
-                                .attr('x', 0)
-                                .attr('y', y)
-                                .attr('dy', lineNumber * lineHeight - 7);
-                        } else {
-                            tempText
-                                .attr('x', 0)
-                                .attr('y', y)
-                                .attr('dy', lineNumber * lineHeight - 7);
-                        }
-                    });
-                });
-
-            // Update positions on simulation tick
-            simulation.on('tick', () => {
-                link
-                    .attr('x1', d => d.source.x)
-                    .attr('y1', d => d.source.y)
-                    .attr('x2', d => d.target.x)
-                    .attr('y2', d => d.target.y);
-
-                node.attr('transform', d => `translate(${d.x},${d.y})`);
-            });
-
-            // Focus on most recent post after simulation stabilizes
-            setTimeout(() => {
-                if (nodes.length > 0) {
-                    focusOnNode(nodes[0]);
-                }
-            }, 1000);
-
-            // Handle window resize
-            window.addEventListener('resize', () => {
-                const newWidth = window.innerWidth;
-                const newHeight = window.innerHeight;
-                svg.attr('width', newWidth).attr('height', newHeight);
-                simulation.force('center', d3.forceCenter(newWidth / 2, newHeight / 2));
-                simulation.alpha(0.3).restart();
-            });
-        }
-
-        // Get post title from markdown text
-        function getPostTitle(text) {
-            const lines = text.split('\n');
-            for (const line of lines) {
-                const trimmed = line.trim();
-                if (trimmed.startsWith('#')) {
-                    return trimmed.replace(/^#+\s*/, '').substring(0, 30);
-                }
-            }
-            return text.substring(0, 30) + '...';
-        }
-
-        // Get shared tags between two tag arrays
-        function getSharedTags(tags1, tags2) {
-            return tags1.filter(tag => tags2.includes(tag));
-        }
-
-        // Focus camera on a specific node
-        function focusOnNode(node) {
-            const width = window.innerWidth;
-            const height = window.innerHeight;
-            
-            const scale = 1.5;
-            const x = -node.x * scale + width / 2;
-            const y = -node.y * scale + height / 2;
-
-            svg.transition()
-                .duration(750)
-                .call(
-                    d3.zoom().transform,
-                    d3.zoomIdentity.translate(x, y).scale(scale)
-                );
-        }
-
-        // Show post overlay
-        function showPost(nodeData) {
-            const overlay = document.getElementById('overlay');
-            const postCard = document.getElementById('post-card');
-            const post = nodeData.post;
-
-            // Set post date
-            const date = new Date(post.timestamp);
-            postCard.querySelector('.post-date').textContent = date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            });
-
-            // Set post content
-            const contentDiv = postCard.querySelector('.post-content');
-            contentDiv.innerHTML = '';
-
-            // Add image if present
-            if (post.image) {
-                const img = document.createElement('img');
-                img.src = post.image;
-                img.alt = 'Post image';
-                contentDiv.appendChild(img);
-            }
-
-            // Render markdown
-            const markdownContent = document.createElement('div');
-            markdownContent.innerHTML = marked.parse(post.text);
-            
-            // Make all links open in new tab
-            markdownContent.querySelectorAll('a').forEach(link => {
-                link.setAttribute('target', '_blank');
-                link.setAttribute('rel', 'noopener noreferrer');
-            });
-            
-            contentDiv.appendChild(markdownContent);
-
-            // Show overlay
-            overlay.style.display = 'flex';
-        }
-
-        // Hide post overlay
-        function hideOverlay() {
-            document.getElementById('overlay').style.display = 'none';
-        }
-
-        // Drag handlers
-        function dragStarted(event, d) {
-            if (!event.active) simulation.alphaTarget(0.3).restart();
-            d.fx = d.x;
-            d.fy = d.y;
-        }
-
-        function dragged(event, d) {
-            d.fx = event.x;
-            d.fy = event.y;
-        }
-
-        function dragEnded(event, d) {
-            if (!event.active) simulation.alphaTarget(0);
-            d.fx = null;
-            d.fy = null;
-        }
-
-        // Event listeners
-        document.getElementById('close-overlay').addEventListener('click', hideOverlay);
-        document.getElementById('overlay').addEventListener('click', (e) => {
-            if (e.target.id === 'overlay') {
-                hideOverlay();
-            }
+          // Vertically center the content by translating the group
+          group.attr("transform", `translate(0, ${-contentHeight / 2})`);
+          // Position texts relative to the content group's top
+          d3.select(labelEl).attr("y", 0);
+          if (hasSubtitle) {
+            d3.select(subEl).attr("y", lbox.height + LINE_GAP);
+          } else {
+            d3.select(subEl).attr("display", "none");
+          }
         });
 
-        // Keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                hideOverlay();
-            }
+        // Insert rectangles behind text using computed sizes
+        node
+          .insert("rect", "g.node-content")
+          .attr("class", "node")
+          .attr("width", (d) => d.nodeWidth)
+          .attr("height", (d) => d.nodeHeight)
+          .attr("x", (d) => -d.nodeWidth / 2)
+          .attr("y", (d) => -d.nodeHeight / 2)
+          .attr("rx", 4)
+          .on("click", (event, d) => showPost(d));
+
+        // Refresh collision force with updated sizes and restart
+        simulation.force(
+          "collision",
+          d3
+            .forceCollide()
+            .radius((d) => Math.max(d.nodeWidth, d.nodeHeight) / 2 + 10)
+        );
+        simulation.alpha(0.6).restart();
+
+        // Update positions on simulation tick
+        simulation.on("tick", () => {
+          link
+            .attr("x1", (d) => d.source.x)
+            .attr("y1", (d) => d.source.y)
+            .attr("x2", (d) => d.target.x)
+            .attr("y2", (d) => d.target.y);
+
+          node.attr("transform", (d) => `translate(${d.x},${d.y})`);
         });
 
-        // Start the application
-        init();
+        // Focus on most recent post after simulation stabilizes
+        setTimeout(() => {
+          if (nodes.length > 0) {
+            focusOnNode(nodes[0]);
+          }
+        }, 1000);
+
+        // Handle window resize
+        window.addEventListener("resize", () => {
+          const newWidth = window.innerWidth;
+          const newHeight = window.innerHeight;
+          svg.attr("width", newWidth).attr("height", newHeight);
+          simulation.force(
+            "center",
+            d3.forceCenter(newWidth / 2, newHeight / 2)
+          );
+          simulation.alpha(0.3).restart();
+        });
+      }
+
+      // Get shared tags between two tag arrays
+      function getSharedTags(tags1, tags2) {
+        return tags1.filter((tag) => tags2.includes(tag));
+      }
+
+      // Focus camera on a specific node
+      function focusOnNode(node) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        const scale = 1.5;
+        const x = -node.x * scale + width / 2;
+        const y = -node.y * scale + height / 2;
+
+        svg
+          .transition()
+          .duration(750)
+          .call(
+            d3.zoom().transform,
+            d3.zoomIdentity.translate(x, y).scale(scale)
+          );
+      }
+
+      // Show post overlay
+      function showPost(nodeData) {
+        const overlay = document.getElementById("overlay");
+        const postCard = document.getElementById("post-card");
+        const post = nodeData.post;
+
+        // Set post date
+        const date = new Date(post.timestamp);
+        postCard.querySelector(".post-date").textContent =
+          date.toLocaleDateString("en-US", {
+            year: "numeric",
+            month: "long",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          });
+
+        // Set post content
+        const contentDiv = postCard.querySelector(".post-content");
+        contentDiv.innerHTML = "";
+
+        // Add image if present
+        if (post.image) {
+          const img = document.createElement("img");
+          img.src = post.image;
+          img.alt = "Post image";
+          contentDiv.appendChild(img);
+        }
+
+        // Render markdown
+        const markdownContent = document.createElement("div");
+        markdownContent.innerHTML = marked.parse(post.text);
+
+        // Make all links open in new tab
+        markdownContent.querySelectorAll("a").forEach((link) => {
+          link.setAttribute("target", "_blank");
+          link.setAttribute("rel", "noopener noreferrer");
+        });
+
+        contentDiv.appendChild(markdownContent);
+
+        // Show overlay
+        overlay.style.display = "flex";
+      }
+
+      // Hide post overlay
+      function hideOverlay() {
+        document.getElementById("overlay").style.display = "none";
+      }
+
+      // Drag handlers
+      function dragStarted(event, d) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        d.fx = d.x;
+        d.fy = d.y;
+      }
+
+      function dragged(event, d) {
+        d.fx = event.x;
+        d.fy = event.y;
+      }
+
+      function dragEnded(event, d) {
+        if (!event.active) simulation.alphaTarget(0);
+        d.fx = null;
+        d.fy = null;
+      }
+
+      // Event listeners
+      document
+        .getElementById("close-overlay")
+        .addEventListener("click", hideOverlay);
+      document.getElementById("overlay").addEventListener("click", (e) => {
+        if (e.target.id === "overlay") hideOverlay();
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") hideOverlay();
+      });
+
+      // Start the application
+      init();
     </script>
-</body>
+  </body>
 </html>
